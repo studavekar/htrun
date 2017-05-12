@@ -18,6 +18,8 @@ Author: Przemyslaw Wirkus <Przemyslaw.Wirkus@arm.com>
 """
 
 import os
+import time
+
 from host_test_plugins import HostTestPluginBase
 
 # Note: This plugin is not fully functional, needs improvements
@@ -67,12 +69,18 @@ class HostTestPluginResetMethod_MPS2(HostTestPluginBase):
         @return Capability call return value
         """
         result = False
+
+        disk =  kwargs.get('disk', None)
+        target_id = kwargs.get('target_id', None)
+        pooling_timeout = kwargs.get('polling_timeout', 60)
         if self.check_parameters(capability, *args, **kwargs) is True:
 
             if capability == 'reboot.txt':
-                # TODO: Implement touch file for reboot
-                pass
-
+                reboot_file_path = os.path.join(disk,capability)
+                reboot_fh = open(reboot_file_path,"w")
+                reboot_fh.close()
+                time.sleep(3) # sufficient delay for device to boot up
+                mount_res, destination_disk = self.check_mount_point_ready(disk, target_id=target_id,timeout=pooling_timeout)
             elif capability == 'shutdown.txt':
                 # TODO: Implement touch file for shutdown
                 pass

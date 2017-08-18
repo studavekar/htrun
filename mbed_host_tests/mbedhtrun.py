@@ -31,7 +31,10 @@ def main():
     result = -2
     test_selector = DefaultTestSelector(init_host_test_cli_params())
     try:
-        result = test_selector.execute()
+        for i in range(0,3):
+            result = test_selector.execute()
+            if result == 0: break
+            print("retry %d/%d"%(i,3))
     except (KeyboardInterrupt, SystemExit):
         test_selector.finish()
         result = -3

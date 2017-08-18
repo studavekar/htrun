@@ -275,6 +275,7 @@ def conn_process(event_queue, dut_event_queue, config):
                     if sync_uuid:
                         sync_uuid_list.append(sync_uuid)
                         sync_behavior -= 1
+                        logger.prn_inf("Sync count: %d" % sync_behavior)
                         loop_timer = time()
                         #Sync behavior will be zero and if last sync fails we should report connection
                         #lost

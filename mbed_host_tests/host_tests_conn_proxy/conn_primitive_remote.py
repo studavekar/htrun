@@ -67,6 +67,8 @@ class RemoteConnectorPrimitive(ConnectorPrimitive):
             self.selected_resource = self.client.allocate({
                 "platform_name": self.platform_name
             })
+            resource_info = self.selected_resource.__dict__
+            self.resource_id = resource_info['_resource_info']['resource_id']
         except self.remote_module.resources.ResourceError as e:
             self.logger.prn_err("can't allocate resource: '%s', reason: %s"% (self.platform_name, str(e)))
             return False

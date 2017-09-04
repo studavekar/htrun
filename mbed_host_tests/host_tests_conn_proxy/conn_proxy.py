@@ -140,10 +140,6 @@ def conn_process(event_queue, dut_event_queue, config):
 
     # Create connector instance with proper configuration
     connector = conn_primitive_factory(conn_resource, config, event_queue, logger)
-    cmd = "curl http://austin-ci-linux-001.austin.arm.com:8000/resource/{}/fs/read?file=DEBUG.TXT".format(connector.selected_resource.resource_id)
-    logger.prn_inf("Running : %s"%(cmd))
-    p = subprocess.Popen(cmd.split())
-    p.wait()
     # If the connector failed, stop the process now
     if not connector.connected():
         logger.prn_err("Failed to connect to resource")
@@ -290,10 +286,6 @@ def conn_process(event_queue, dut_event_queue, config):
                         break
             elif last_sync == True:
                 #SYNC lost connection event : Device not responding, send sync failed
-                cmd = "curl http://austin-ci-linux-001.austin.arm.com:8000/resource/{}/fs/read?file=DEBUG.TXT".format(connector.selected_resource.resource_id)
-                logger.prn_inf("Running : %s"%(cmd))
-                p = subprocess.Popen(cmd.split())
-                p.wait()
                 __notify_sync_failed()
                 break
 

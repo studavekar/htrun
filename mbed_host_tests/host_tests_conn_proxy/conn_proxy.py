@@ -125,6 +125,23 @@ def conn_process(event_queue, dut_event_queue, config):
         connector.finish()
         event_queue.put(('__notify_sync_failed', error_msg, time()))
 
+    def get_interface_n_serial(serial_port):
+        command = ["udevadm info %s | grep -i 'short\|id_model=' | cut -d'=' -f2 | tr -s '[:cntrl:]' ' '" % (serial_port)]
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True)
+        output, stderr = process.communicate()
+        print (output, stderr)
+        if process.returncode == 0 and len(output) > 0:
+            return output.split()
+        return None, None
+
+    def update_st_link(serial, retry=3):
+        if serial != None and len(serial) > 0:
+            cmd = "java -jar ~/AllPlatforms/STLinkUpgrade.jar -sn %s -force_prog" % (serial)
+            for i in range(0, retry):
+                if subprocess.call(cmd, shell=True) == 0:
+                    return 0
+        return 1
+
     logger = HtrunLogger('CONN')
     logger.prn_inf("starting connection process...")
 
@@ -286,6 +303,11 @@ def conn_process(event_queue, dut_event_queue, config):
                         break
             elif last_sync == True:
                 #SYNC lost connection event : Device not responding, send sync failed
+                interface, serial = get_interface_n_serial(connector.selected_resource._resource_info['serial_port'])
+                logger.prn_inf("Interface {} , serial : {}".format(interface,serial))
+                if interface == 'STM32_STLink' and serial != None:
+                    logger.prn_inf("updating ST link for the device ...")
+                    update_st_link(serial)
                 __notify_sync_failed()
                 break
 

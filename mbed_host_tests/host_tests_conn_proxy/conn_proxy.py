@@ -303,7 +303,7 @@ def conn_process(event_queue, dut_event_queue, config):
                         break
             elif last_sync == True:
                 #SYNC lost connection event : Device not responding, send sync failed
-                interface, serial = get_interface_n_serial(connector.selected_resource._resource_info['serial_port'])
+                interface, serial = get_interface_n_serial(connector.selected_resource._allocation_context[u'channels'][u'serial0']['path'])
                 logger.prn_inf("Interface {} , serial : {}".format(interface,serial))
                 if interface == 'STM32_STLink' and serial != None:
                     logger.prn_inf("updating ST link for the device ...")

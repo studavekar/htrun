@@ -38,16 +38,18 @@ class EchoTest(BaseHostTest):
         self.uuid_recv.append(value)
         self.__send_echo_uuid()
 
+    def _callback_getuuid(self, key, value, timestamp):
+        self.__send_echo_uuid()
+
     def _callback_echo_count(self, key, value, timestamp):
         # Handshake
         self.echo_count = int(value)
         self.send_kv(key, value)
-        # Send first echo to echo server on DUT
-        self.__send_echo_uuid()
 
     def setup(self):
         self.register_callback("echo", self._callback_echo)
         self.register_callback("echo_count", self._callback_echo_count)
+        self.register_callback("get_uuid", self._callback_getuuid)
 
     def result(self):
         self.__result = self.uuid_sent == self.uuid_recv

@@ -19,6 +19,7 @@ limitations under the License.
 import re
 import sys
 import uuid
+import subprocess
 from time import time
 from mbed_host_tests.host_tests_logger import HtrunLogger
 from .conn_primitive_serial import SerialConnectorPrimitive
@@ -128,6 +129,21 @@ def conn_process(event_queue, dut_event_queue, config):
         connector.finish()
         event_queue.put(('__notify_sync_failed', error_msg, time()))
 
+    def update_interface_fw(serial_port, retry=3):
+        command = ["udevadm info %s | grep -i 'short\|id_model=' | cut -d'=' -f2 | tr -s '[:cntrl:]' ' '" % (serial_port)]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        output, stderr = process.communicate()
+        logger.prn_inf("output : {} and error : {}".format(output, stderr))
+        if process.returncode == 0 and len(output) > 0:
+            interface, serial = output.split()
+            if len(serial) > 0 and interface in 'STM32_STLink':
+                logger.prn_inf("updating ST link for the device ...")
+                cmd = "java -jar /usr/local/bin/STLinkUpgrade/STLinkUpgrade.jar -sn %s -force_prog" % (serial)
+                for i in range(0, retry):
+                    if subprocess.call(cmd, shell=True) == 0:
+                        return 0
+        return 1
+
     logger = HtrunLogger('CONN')
     logger.prn_inf("starting connection process...")
 
@@ -143,7 +159,6 @@ def conn_process(event_queue, dut_event_queue, config):
 
     # Create connector instance with proper configuration
     connector = conn_primitive_factory(conn_resource, config, event_queue, logger)
-
     # If the connector failed, stop the process now
     if not connector.connected():
         logger.prn_err("Failed to connect to resource")
@@ -177,7 +192,7 @@ def conn_process(event_queue, dut_event_queue, config):
         # Failed to write 'wake up' string, exit conn_process
         __notify_conn_lost()
         return 0
-        
+
 
     # Sync packet management allows us to manipulate the way htrun sends __sync packet(s)
     # With current settings we can force on htrun to send __sync packets in this manner:
@@ -289,6 +304,8 @@ def conn_process(event_queue, dut_event_queue, config):
                         break
             elif last_sync == True:
                 #SYNC lost connection event : Device not responding, send sync failed
+                #To-Do should check if its STlink and only then call this function
+                update_interface_fw(connector.selected_resource._allocation_context[u'channels'][u'serial0']['path'])
                 __notify_sync_failed()
                 break
 

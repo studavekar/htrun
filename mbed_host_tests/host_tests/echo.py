@@ -18,7 +18,7 @@ limitations under the License.
 
 import uuid
 from mbed_host_tests import BaseHostTest
-
+import time
 class EchoTest(BaseHostTest):
 
     __result = None
@@ -43,7 +43,8 @@ class EchoTest(BaseHostTest):
         self.echo_count = int(value)
         self.send_kv(key, value)
         # Send first echo to echo server on DUT
-        self.__send_echo_uuid()
+        time.sleep(5)
+	self.__send_echo_uuid()
 
     def setup(self):
         self.register_callback("echo", self._callback_echo)

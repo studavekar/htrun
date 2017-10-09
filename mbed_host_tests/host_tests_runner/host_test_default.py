@@ -134,7 +134,7 @@ class DefaultTestSelector(DefaultTestSelectorBase):
         coverage_idle_timeout = 10  # Default coverage idle timeout
         event_queue = Queue()       # Events from DUT to host
         dut_event_queue = Queue()   # Events from host to DUT {k;v}
-
+        process_join_timeout = 60   # wait for process to clean up
         def callback__notify_prn(key, value, timestamp):
             """! Handles __norify_prn. Prints all lines in separate log line """
             for line in value.splitlines():
@@ -428,7 +428,11 @@ class DefaultTestSelector(DefaultTestSelectorBase):
 
         # Force conn_proxy process to return
         dut_event_queue.put(('__host_test_finished', True, time()))
-        p.join()
+        p.join(process_join_timeout)
+        if p.is_alive():
+            p.terminate()
+            p.join(process_join_timeout)
+            self.logger.prn_inf("Process didn't exit after given gracefully")
         self.logger.prn_inf("CONN exited with code: %s"% str(p.exitcode))
 
         # Callbacks...

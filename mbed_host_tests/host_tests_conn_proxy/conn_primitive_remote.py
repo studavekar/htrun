@@ -118,6 +118,7 @@ class RemoteConnectorPrimitive(ConnectorPrimitive):
         if not self.selected_resource:
             raise Exception("remote resource not exists!")
         if not self.selected_resource.flash(filename, forceflash=forceflash):
+            self.selected_resource.release()
             raise Exception("remote resources flashing failed!")
 
     def read(self, count):

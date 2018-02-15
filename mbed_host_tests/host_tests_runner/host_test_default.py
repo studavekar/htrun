@@ -134,7 +134,7 @@ class DefaultTestSelector(DefaultTestSelectorBase):
         coverage_idle_timeout = 10  # Default coverage idle timeout
         event_queue = Queue()       # Events from DUT to host
         dut_event_queue = Queue()   # Events from host to DUT {k;v}
-        process_join_timeout = 60   # wait for process to clean up
+        process_join_timeout = 120   # wait for process to clean up
         def callback__notify_prn(key, value, timestamp):
             """! Handles __norify_prn. Prints all lines in separate log line """
             for line in value.splitlines():

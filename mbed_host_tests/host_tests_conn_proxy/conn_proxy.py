@@ -294,6 +294,12 @@ def conn_process(event_queue, dut_event_queue, config):
                         break
             elif last_sync == True:
                 #SYNC lost connection event : Device not responding, send sync failed
+                programming_version = str(connector.selected_resource._resource_info[u'firmware'][u'version'])
+                print("interface firmware version : %s "%(programming_version))
+                if programming_version == "0221":
+                    import os
+                    serial_id = str(connector.selected_resource._resource_info[u'resource_id'])
+                    os.system('stlink_update --tid=%s' % (serial_id))
                 __notify_sync_failed()
                 break
 

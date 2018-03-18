@@ -70,7 +70,7 @@ class RemoteConnectorPrimitive(ConnectorPrimitive):
         # Query for available resource
         # Automatic selection and allocation of a resource
         try:
-            self.selected_resource = self.client.allocate(self.allocate_requirements)
+            self.selected_resource = self.client.allocate(self.allocate_requirements,expiration=600)
 
         except self.remote_module.resources.ResourceError as e:
             self.logger.prn_err("can't allocate resource: '%s', reason: %s"% (self.platform_name, str(e)))

@@ -31,8 +31,9 @@ import imp
 import inspect
 from os import listdir
 from os.path import isfile, join, abspath
+import sys
 from optparse import OptionParser
-
+from optparse import SUPPRESS_HELP
 from mbed_host_tests import host_tests_plugins
 from mbed_host_tests.host_tests_registry import HostRegistry
 from mbed_host_tests.host_tests import BaseHostTest, event_callback
@@ -282,6 +283,19 @@ def init_host_test_cli_params():
                       dest='global_resource_mgr',
                       help='[Experimental] Global resource manager service module name, IP and port, example remote_client:10.2.123.43:3334')
 
+    # Show --fm option only if "fm_agent" module installed
+    try:
+        imp.find_module('fm_agent')
+    except ImportError:
+        fm_help=SUPPRESS_HELP
+    else:
+        fm_help='Fast Model connection, This option requires mbed-fastmodel-agent module installed, list CONFIGs via "mbedfm"'
+    parser.add_option('', '--fm',
+                      dest='fast_model_connection',
+                      metavar="CONFIG",
+                      default=None,
+                      help=fm_help)
+
     parser.add_option('', '--run',
                       dest='run_binary',
                       default=False,
@@ -344,4 +358,9 @@ def init_host_test_cli_params():
     parser.epilog = """Example: mbedhtrun -d E: -p COM5 -f "test.bin" -C 4 -c shell -m K64F"""
 
     (options, _) = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit()
+
     return options

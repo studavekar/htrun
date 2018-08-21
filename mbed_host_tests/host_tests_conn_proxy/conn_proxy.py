@@ -16,6 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from past.builtins import basestring
+
 import re
 import sys
 import uuid
@@ -23,6 +25,7 @@ from time import time
 from mbed_host_tests.host_tests_logger import HtrunLogger
 from .conn_primitive_serial import SerialConnectorPrimitive
 from .conn_primitive_remote import RemoteConnectorPrimitive
+from .conn_primitive_fastmodel import FastmodelConnectorPrimitive
 
 if (sys.version_info > (3, 0)):
     from queue import Empty as QueueEmpty # Queue here refers to the module, not a class
@@ -39,7 +42,12 @@ class KiViBufferWalker():
 
     def append(self, payload):
         """! Append stream buffer with payload and process. Returns non-KV strings"""
-        self.buff += payload
+        logger = HtrunLogger('CONN')
+        try:
+            self.buff += payload.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.prn_wrn("UnicodeDecodeError encountered!")
+            self.buff += payload.decode('utf-8','ignore')
         lines = self.buff.split('\n')
         self.buff = lines[-1]   # remaining
         lines.pop(-1)
@@ -106,9 +114,11 @@ def conn_primitive_factory(conn_resource, config, event_queue, logger):
     elif conn_resource == 'grm':
         # Start GRM (Gloabal Resource Mgr) collection
         logger.prn_inf("initializing global resource mgr listener... ")
-        connector = RemoteConnectorPrimitive(
-            'GLRM',
-            config=config)
+        connector = RemoteConnectorPrimitive('GLRM', config=config)
+    elif conn_resource == 'fmc':
+        # Start Fast Model Connection collection
+        logger.prn_inf("initializing fast model connection")
+        connector = FastmodelConnectorPrimitive('FSMD', config=config)
     else:
         logger.pn_err("unknown connection resource!")
         raise NotImplementedError("ConnectorPrimitive factory: unknown connection resource '%s'!"% conn_resource)
@@ -163,6 +173,8 @@ def conn_process(event_queue, dut_event_queue, config):
         sync_uuid = str(uuid.uuid4())
         # Handshake, we will send {{sync;UUID}} preamble and wait for mirrored reply
         if timeout:
+            logger.prn_inf("Reset the part and send in new preamble...")
+            connector.reset()
             logger.prn_inf("resending new preamble '%s' after %0.2f sec"% (sync_uuid, timeout))
         else:
             logger.prn_inf("sending preamble '%s'"% sync_uuid)
@@ -266,6 +278,9 @@ def conn_process(event_queue, dut_event_queue, config):
                             logger.prn_inf("found SYNC in stream: {{%s;%s}} it is #%d sent, queued..."% (key, value, idx))
                         else:
                             logger.prn_err("found faulty SYNC in stream: {{%s;%s}}, ignored..."% (key, value))
+                            logger.prn_inf("Resetting the part and sync timeout to clear out the buffer...")
+                            connector.reset()
+                            loop_timer = time()
                     else:
                         logger.prn_wrn("found KV pair in stream: {{%s;%s}}, ignoring..."% (key, value))
 

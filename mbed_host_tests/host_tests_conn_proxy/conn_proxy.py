@@ -201,6 +201,7 @@ def conn_process(event_queue, dut_event_queue, config):
     #                     is sent unless we get response from target platform or
     #                     timeout occur
 
+    connector.write_kv('__sync', "1111-2222-3333-4444-5555")
     if sync_behavior > 0:
         # Sending up to 'n' __sync packets
         logger.prn_inf("sending up to %s __sync packets (specified with --sync=%s)"% (sync_behavior, sync_behavior))
